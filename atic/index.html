@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HisabAI - Indian Kachha Bill Scanner & Sales Tracker</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+
+  <!-- Top Navigation Header -->
+  <header class="app-header">
+    <div class="brand">
+      <div class="brand-logo">₹</div>
+      <div class="brand-text">
+        <h1>HisabAI</h1>
+        <p>Kachha Bill OCR & Kirana Sales Tracker</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <div class="shop-badge" id="headerShopBadge">
+        <span id="shopNameText">Shree Ganesh Kirana</span>
+        <span style="opacity: 0.7;">•</span>
+        <span id="userNameText">Ramesh Gupta</span>
+      </div>
+      <button class="btn btn-outline btn-sm" id="switchShopBtn" title="Switch between Demo Kirana and General Store">Switch Shop</button>
+    </div>
+  </header>
+
+  <!-- Navigation Tabs -->
+  <nav class="nav-tabs">
+    <button class="tab-btn active" data-tab="scanTab">
+      <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+      Scan Bill
+    </button>
+    <button class="tab-btn" data-tab="verifyTab" id="navVerifyBtn" style="display: none;">
+      <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+      Verify Bill <span class="badge-tag badge-warning" id="verifyBadgeCount">1</span>
+    </button>
+    <button class="tab-btn" data-tab="dashboardTab">
+      <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+      Sales Dashboard
+    </button>
+    <button class="tab-btn" data-tab="billsHistoryTab">
+      <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+      Bills History
+    </button>
+    <button class="tab-btn" data-tab="settingsTab">
+      <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+      OCR Settings
+    </button>
+  </nav>
+
+  <!-- Main Container -->
+  <main class="container">
+
+    <!-- Global Alert / Status Banner -->
+    <div id="globalOcrBanner" class="alert alert-info" style="display: none;">
+      <span id="bannerIcon">ℹ️</span>
+      <div id="bannerText">Checking OCR provider status...</div>
+    </div>
+
+    <!-- ==================================================================== -->
+    <!-- TAB 1: SCAN BILL                                                     -->
+    <!-- ==================================================================== -->
+    <section id="scanTab" class="tab-pane active">
+      <div class="card">
+        <h2 class="card-title">
+          <span>Upload Kachha Bill / Receipt</span>
+          <span class="badge-tag badge-info">Supported: EN, HI, KN, TE</span>
+        </h2>
+
+        <!-- Language Selector -->
+        <div class="language-selector-box">
+          <label class="form-label" for="billLanguageSelect">
+            Bill Language:
+            <span style="color: var(--text-muted); font-weight: normal;">(Choose Auto-detect or specify before scanning)</span>
+          </label>
+          <select id="billLanguageSelect" class="form-select" style="max-width: 400px;">
+            <option value="auto" selected>✨ Auto-detect (Hindi / Kannada / Telugu / English)</option>
+            <option value="en">English (en)</option>
+            <option value="hi">हिंदी - Hindi (hi)</option>
+            <option value="kn">ಕನ್ನಡ - Kannada (kn)</option>
+            <option value="te">తెలుగు - Telugu (te)</option>
+          </select>
+        </div>
+
+        <div class="scanner-grid">
+          <!-- Upload Box -->
+          <div>
+            <div class="upload-zone" id="dropZone">
+              <input type="file" id="billFileInput" accept="image/jpeg,image/png,image/webp,image/heic">
+              <div class="upload-icon">📷</div>
+              <h3>Click to select or drag photo here</h3>
+              <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 0.5rem;">
+                Supports handwritten or printed bills (JPEG, PNG, WEBP, up to 10MB)
+              </p>
+              <div id="uploadSpinner" style="display: none; margin-top: 1rem;">
+                <span class="spinner"></span>
+                <p style="font-weight: 600; margin-top: 0.5rem; color: var(--primary);">Analyzing & extracting text with OCR...</p>
+              </div>
+            </div>
+
+            <div style="margin-top: 1rem; text-align: center;">
+              <span style="font-size: 0.85rem; color: var(--text-muted);">or</span>
+              <button class="btn btn-outline btn-sm" id="manualEntryBtn" style="margin-left: 0.5rem;">
+                ✍️ Enter Bill Manually
+              </button>
+            </div>
+          </div>
+
+          <!-- Representative Test Bills (1-Click Test Fixtures) -->
+          <div>
+            <div style="background: #f8fafc; border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1rem;">
+              <h4 style="font-size: 0.95rem; margin-bottom: 0.5rem;">⚡ Quick Test Samples:</h4>
+              <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.75rem;">
+                Test real handwritten and printed bills across all 4 supported languages and edge cases:
+              </p>
+              <div class="sample-chips" id="sampleChipsList">
+                <!-- Loaded dynamically -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================================================================== -->
+    <!-- TAB 2: VERIFICATION SCREEN (SIDE-BY-SIDE BILL + EXTRACTED DATA)       -->
+    <!-- ==================================================================== -->
+    <section id="verifyTab" class="tab-pane" style="display: none;">
+      <div class="card" style="margin-bottom: 1rem; padding: 0.85rem 1.25rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+          <div>
+            <h2 style="font-size: 1.15rem; font-weight: 700;">Bill Verification & Review</h2>
+            <p style="font-size: 0.8rem; color: var(--text-muted);">
+              Inspect the extracted details against the original bill photo. Edit any field before saving to your financial records.
+            </p>
+          </div>
+          <div style="display: flex; gap: 0.5rem; align-items: center;">
+            <span id="detectedLangBadge" class="badge-tag badge-info">Detected: Auto</span>
+            <span id="reviewWarningBadge" class="badge-tag badge-warning" style="display: none;">⚠️ Review Needed</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Verification Layout: Photo on Left, Editable Form on Right -->
+      <div class="verification-layout">
+        
+        <!-- Left Panel: Original Image Preview -->
+        <div class="image-preview-panel">
+          <div style="padding: 0.5rem 1rem; background: #222; color: #eee; font-size: 0.8rem; display: flex; justify-content: space-between; align-items: center;">
+            <span>Original Bill Photo</span>
+            <span id="imageQualityIndicator" class="badge-tag badge-success">Good Sharpness</span>
+          </div>
+          <div style="flex: 1; min-height: 380px; position: relative;">
+            <img id="verifyImagePreview" src="" alt="Bill Photo Preview">
+          </div>
+          <div class="image-caption">
+            <span id="imgHashText">Hash: --</span>
+            <button class="btn btn-outline btn-sm" id="toggleRawOcrBtn" style="color: #eee; border-color: #555; background: #333;">Show Raw OCR Text</button>
+          </div>
+          <div id="rawOcrContainer" style="display: none; max-height: 180px; overflow-y: auto; background: #1a1a1a; color: #a3e635; padding: 0.75rem; font-family: monospace; font-size: 0.8rem; white-space: pre-wrap; border-top: 1px solid #333;"></div>
+        </div>
+
+        <!-- Right Panel: Editable Bill Form -->
+        <div class="bill-form-panel">
+          
+          <!-- Warning banner if fields need review -->
+          <div id="verifyAlertBox" class="alert alert-warning" style="display: none;">
+            <span>⚠️</span>
+            <div id="verifyAlertText">Some fields require your verification.</div>
+          </div>
+
+          <!-- Header Fields: Bill No, Date -->
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+            <div>
+              <label class="form-label" for="verifyBillNo">Bill / Memo Number:</label>
+              <input type="text" id="verifyBillNo" class="form-control" placeholder="e.g. 104">
+            </div>
+            <div>
+              <label class="form-label" for="verifyBillDate">Bill Date: *</label>
+              <input type="date" id="verifyBillDate" class="form-control" required>
+            </div>
+          </div>
+
+          <!-- Items Table -->
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1.25rem;">
+            <h3 style="font-size: 1rem; font-weight: 700;">Extracted Items Sold</h3>
+            <button class="btn btn-outline btn-sm" id="addItemRowBtn">➕ Add Item</button>
+          </div>
+
+          <div style="overflow-x: auto;">
+            <table class="items-table" id="verifyItemsTable">
+              <thead>
+                <tr>
+                  <th style="width: 32%;">Item Name (Original Script)</th>
+                  <th style="width: 14%;">Qty</th>
+                  <th style="width: 16%;">Unit</th>
+                  <th style="width: 16%;">Rate (₹)</th>
+                  <th style="width: 16%;">Total (₹)</th>
+                  <th style="width: 6%;"></th>
+                </tr>
+              </thead>
+              <tbody id="verifyItemsTbody">
+                <!-- Item rows populated here -->
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Bill Summary Totals & Calculations -->
+          <div style="margin-top: 1.5rem; background: #f8fafc; border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1rem;">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 0.75rem; align-items: flex-end;">
+              <div>
+                <label class="form-label" style="font-size: 0.8rem;">Subtotal (₹):</label>
+                <input type="number" step="0.01" id="verifySubtotal" class="form-control" style="font-weight: 600;" readonly>
+              </div>
+              <div>
+                <label class="form-label" style="font-size: 0.8rem;">Discount (₹):</label>
+                <input type="number" step="0.01" id="verifyDiscount" class="form-control" value="0.0">
+              </div>
+              <div>
+                <label class="form-label" style="font-size: 0.8rem;">Tax / GST (₹):</label>
+                <input type="number" step="0.01" id="verifyTax" class="form-control" value="0.0">
+              </div>
+              <div>
+                <label class="form-label" style="font-size: 0.8rem; color: var(--primary);">Grand Total (₹): *</label>
+                <input type="number" step="0.01" id="verifyGrandTotal" class="form-control" style="font-weight: 800; font-size: 1.1rem; color: #0f2b48;" required>
+              </div>
+            </div>
+            <div id="mathValidationNotice" style="font-size: 0.8rem; margin-top: 0.5rem; color: var(--text-muted);"></div>
+          </div>
+
+          <!-- Notes -->
+          <div style="margin-top: 1rem;">
+            <label class="form-label" for="verifyNotes">Notes / Customer Name:</label>
+            <input type="text" id="verifyNotes" class="form-control" placeholder="Optional reference note">
+          </div>
+
+          <!-- Actions -->
+          <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.5rem; border-top: 1px solid var(--border); padding-top: 1rem;">
+            <button class="btn btn-outline" id="cancelVerifyBtn">Cancel</button>
+            <button class="btn btn-success" id="confirmSaveBillBtn">
+              <span id="saveBtnSpinner" class="spinner" style="display: none;"></span>
+              ✅ Confirm & Save Bill
+            </button>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================================================================== -->
+    <!-- TAB 3: SALES DASHBOARD                                               -->
+    <!-- ==================================================================== -->
+    <section id="dashboardTab" class="tab-pane" style="display: none;">
+      
+      <!-- Metrics Grid -->
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <div class="kpi-title">Today's Sales</div>
+          <div class="kpi-value" id="kpiTodaySales">₹0.00</div>
+          <div class="kpi-subtitle" id="kpiTodayBills">0 bills recorded today</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-title">Last 7 Days Sales</div>
+          <div class="kpi-value" id="kpiWeekSales">₹0.00</div>
+          <div class="kpi-subtitle">Weekly revenue</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-title">This Month</div>
+          <div class="kpi-value" id="kpiMonthSales">₹0.00</div>
+          <div class="kpi-subtitle">Monthly sales tracking</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-title">All-Time Total</div>
+          <div class="kpi-value" id="kpiAllTimeSales">₹0.00</div>
+          <div class="kpi-subtitle" id="kpiTotalBills">0 verified bills</div>
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+        
+        <!-- Item-wise Sales Breakdown -->
+        <div class="card">
+          <h2 class="card-title">
+            <span>📦 Item-Wise Sales Breakdown</span>
+            <button class="btn btn-outline btn-sm" id="refreshDashboardBtn">🔄 Refresh</button>
+          </h2>
+          <div style="overflow-x: auto; max-height: 450px;">
+            <table class="items-table" id="itemSalesTable">
+              <thead>
+                <tr>
+                  <th>Item Name</th>
+                  <th>Quantity Sold</th>
+                  <th>Revenue (₹)</th>
+                  <th>Avg Rate</th>
+                </tr>
+              </thead>
+              <tbody id="itemSalesTbody">
+                <tr><td colspan="4" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">No items recorded yet.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Recent Bills on Dashboard -->
+        <div class="card">
+          <h2 class="card-title">
+            <span>🧾 Recent Confirmed Bills</span>
+            <button class="btn btn-primary btn-sm" onclick="app.showTab('scanTab')">➕ Scan New Bill</button>
+          </h2>
+          <div style="overflow-x: auto; max-height: 450px;">
+            <table class="items-table" id="recentBillsTable">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Bill #</th>
+                  <th>Items</th>
+                  <th>Total (₹)</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="recentBillsTbody">
+                <tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">No bills saved yet.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ==================================================================== -->
+    <!-- TAB 4: BILLS HISTORY                                                 -->
+    <!-- ==================================================================== -->
+    <section id="billsHistoryTab" class="tab-pane" style="display: none;">
+      <div class="card">
+        <h2 class="card-title">
+          <span>Complete Bills History</span>
+          <button class="btn btn-outline btn-sm" id="refreshBillsHistoryBtn">🔄 Refresh</button>
+        </h2>
+        <div style="overflow-x: auto;">
+          <table class="items-table">
+            <thead>
+              <tr>
+                <th>Bill Date</th>
+                <th>Bill #</th>
+                <th>Language</th>
+                <th>Item Count</th>
+                <th>Grand Total (₹)</th>
+                <th>Created At</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="allBillsTbody">
+              <tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 2rem;">Loading bills...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================================================================== -->
+    <!-- TAB 5: OCR SETTINGS & SYSTEM STATUS                                   -->
+    <!-- ==================================================================== -->
+    <section id="settingsTab" class="tab-pane" style="display: none;">
+      <div class="card">
+        <h2 class="card-title">Google Cloud Vision OCR & Language Configuration</h2>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+          <div>
+            <h4 style="margin-bottom: 0.5rem;">Supported Bill Languages:</h4>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
+              HisabAI strictly supports exactly 4 languages for kachha bill recognition:
+            </p>
+            <ul style="list-style: none; padding: 0;">
+              <li style="padding: 0.5rem; background: #f8fafc; border-radius: var(--radius-sm); margin-bottom: 0.4rem; display: flex; justify-content: space-between;">
+                <strong>1. English (en)</strong>
+                <span class="badge-tag badge-success">Active</span>
+              </li>
+              <li style="padding: 0.5rem; background: #f8fafc; border-radius: var(--radius-sm); margin-bottom: 0.4rem; display: flex; justify-content: space-between;">
+                <strong>2. हिंदी - Hindi (hi)</strong>
+                <span class="badge-tag badge-success">Active</span>
+              </li>
+              <li style="padding: 0.5rem; background: #f8fafc; border-radius: var(--radius-sm); margin-bottom: 0.4rem; display: flex; justify-content: space-between;">
+                <strong>3. ಕನ್ನಡ - Kannada (kn)</strong>
+                <span class="badge-tag badge-success">Active</span>
+              </li>
+              <li style="padding: 0.5rem; background: #f8fafc; border-radius: var(--radius-sm); margin-bottom: 0.4rem; display: flex; justify-content: space-between;">
+                <strong>4. తెలుగు - Telugu (te)</strong>
+                <span class="badge-tag badge-success">Active</span>
+              </li>
+            </ul>
+          </div>
+
+          <div>
+            <h4 style="margin-bottom: 0.5rem;">Google Cloud Vision Status:</h4>
+            <div id="ocrConfigDetails" style="background: #f8fafc; border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1rem; font-size: 0.85rem;">
+              <!-- Populated by JS -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Edit/View Bill Modal -->
+  <div class="modal-overlay" id="billModal" style="display: none;">
+    <div class="modal-card">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <h3 id="modalBillTitle">Bill Details</h3>
+        <button class="btn btn-outline btn-sm" onclick="app.closeModal()">✕</button>
+      </div>
+      <div id="modalBillContent">
+        <!-- Details injected here -->
+      </div>
+    </div>
+  </div>
+
+  <script src="/static/js/app.js"></script>
+</body>
+</html>
